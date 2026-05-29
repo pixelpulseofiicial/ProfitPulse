@@ -2,6 +2,8 @@
 
 Stock Exit Strategy Calculator for hackathons. Search a company and see **KEEP INVESTING** (green) or **EXIT NOW** (red).
 
+Built for the Anakin Build-a-thon. Uses Node.js as the backend and the Anakin Wire API to scrape data from Yahoo Finance and Screener.
+
 ## Stack
 
 - **Backend:** Node.js + Express
