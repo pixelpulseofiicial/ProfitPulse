@@ -1,0 +1,19 @@
+{
+  "name": "profitpulse",
+  "version": "1.0.0",
+  "description": "ProfitPulse — Stock Exit Strategy Calculator (hackathon)",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": ["stocks", "exit-strategy", "anakin"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@anakin-io/sdk": "^0.1.0",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0"
+  }
+}

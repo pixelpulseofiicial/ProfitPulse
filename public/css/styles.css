@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Segoe+UI:wght@400;600;700&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #000;
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+a {
+  color: #8ec5ff;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #222;
+  background: #000;
+}
+
+.top-bar h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+.main-screen {
+  min-height: calc(100vh - 58px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.handwriting-title {
+  font-family: 'Caveat', cursive;
+  font-size: clamp(3rem, 10vw, 5rem);
+  font-weight: 700;
+  margin: 0 0 1.75rem;
+  color: #fff;
+  text-align: center;
+  line-height: 1;
+}
+
+.search-wrap {
+  width: min(560px, 100%);
+}
+
+.search-form {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.search-form input {
+  flex: 1;
+  padding: 0.9rem 1rem;
+  border-radius: 999px;
+  border: 1px solid #333;
+  background: #111;
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+}
+
+.search-form input::placeholder {
+  color: #777;
+}
+
+.search-form input:focus {
+  border-color: #555;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
+}
+
+.search-form button {
+  padding: 0.9rem 1.25rem;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: #000;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.search-form button:hover {
+  background: #e8e8e8;
+}
+
+.hint {
+  margin-top: 1rem;
+  text-align: center;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+/* Company result page */
+.result-page {
+  min-height: calc(100vh - 58px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1.25rem 4rem;
+}
+
+.company-name {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3rem);
+  font-weight: 700;
+  text-align: center;
+  color: #fff;
+}
+
+.signal {
+  margin-top: 2rem;
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.signal.keep {
+  color: #22c55e;
+}
+
+.signal.exit {
+  color: #ef4444;
+}
+
+.loading {
+  margin-top: 2rem;
+  color: #aaa;
+  font-size: 1.1rem;
+}
+
+.details {
+  margin-top: 2.5rem;
+  width: min(640px, 100%);
+  background: #0d0d0d;
+  border: 1px solid #222;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+.details h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: #bbb;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.details ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #ddd;
+}
+
+.details li {
+  margin-bottom: 0.45rem;
+}
+
+.back-link {
+  margin-top: 2rem;
+  color: #ccc;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.back-link:hover {
+  color: #fff;
+}
+
+.error-msg {
+  margin-top: 1.5rem;
+  color: #f87171;
+  text-align: center;
+}
+
+.score-pill {
+  margin-top: 0.75rem;
+  color: #999;
+  font-size: 0.95rem;
+  text-align: center;
+}

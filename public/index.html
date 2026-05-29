@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ProfitPulse</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <header class="top-bar">
+      <h1>ProfitPulse</h1>
+    </header>
+
+    <main class="main-screen">
+      <p class="handwriting-title" aria-label="ProfitPulse">ProfitPulse</p>
+
+      <div class="search-wrap">
+        <form class="search-form" id="search-form" action="/company.html" method="get">
+          <input
+            type="text"
+            name="q"
+            id="company-input"
+            placeholder="Search company name (e.g. TCS, Reliance)"
+            autocomplete="off"
+            required
+          />
+          <button type="submit">Search</button>
+        </form>
+        <p class="hint">
+          We check Yahoo Finance &amp; Screener using the Anakin Wire API.
+        </p>
+      </div>
+    </main>
+
+    <script src="/js/main.js"></script>
+  </body>
+</html>
