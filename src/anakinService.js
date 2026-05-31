@@ -6,14 +6,34 @@ import {
   parseMetricsFromText,
 } from './exitStrategy.js';
 
-const API_KEY = process.env.ANAKIN_API_KEY;
-const BASE_URL = 'https://api.anakin.io/v1';
+import {
+  apiKeyHelpMessage,
+  getAnakinApiKey,
+  getApiKeyStatus,
+  isAnakinConfigured,
+} from './config.js';
+
+const SCRAPE_TIMEOUT_MS = 50_000;
+const TOTAL_TIMEOUT_MS = 70_000;
+
+const SCRAPE_OPTS = {
+  formats: ['markdown'],
+  country: 'in',
+  useBrowser: false,
+  generateJson: true,
+  pollTimeoutMs: SCRAPE_TIMEOUT_MS,
+};
 
 let client = null;
 
+export { isAnakinConfigured, getApiKeyStatus, apiKeyHelpMessage };
+
 function getClient() {
-  if (!API_KEY) return null;
-  if (!client) client = new Anakin({ apiKey: API_KEY, pollTimeoutMs: 180_000 });
+  const apiKey = getAnakinApiKey();
+  if (!apiKey) return null;
+  if (!client) {
+    client = new Anakin({ apiKey, pollTimeoutMs: SCRAPE_TIMEOUT_MS });
+  }
   return client;
 }
 
@@ -26,57 +46,32 @@ function slugify(name) {
     .replace(/^-|-$/g, '');
 }
 
-async function holocronSearch(query) {
-  if (!API_KEY) return [];
-  const url = new URL(`${BASE_URL}/holocron/search`);
-  url.searchParams.set('q', query);
-  const res = await fetch(url, {
-    headers: { 'X-API-Key': API_KEY },
-  });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.actions ?? data.results ?? [];
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms);
+    }),
+  ]);
 }
 
-async function tryWireStockAction(companyName) {
+async function fetchViaSearch(companyName) {
   const anakin = getClient();
   if (!anakin) return null;
 
-  const queries = [
-    `screener ${companyName}`,
-    'screener.in company',
-    `yahoo finance ${companyName}`,
-    'yahoo finance quote',
-  ];
+  const result = await anakin.search(
+    `${companyName} stock P/E ratio debt to equity profit growth ROE 52 week high`,
+    { limit: 5 }
+  );
 
-  for (const q of queries) {
-    const actions = await holocronSearch(q);
-    const match = actions.find((a) => {
-      const hay = `${a.name ?? ''} ${a.catalogSlug ?? ''} ${a.description ?? ''}`.toLowerCase();
-      return (
-        hay.includes('screener') ||
-        hay.includes('yahoo') ||
-        hay.includes('finance')
-      );
-    });
-    if (!match?.actionId && !match?.id) continue;
+  const text = (result.results ?? [])
+    .map((r) => `${r.title ?? ''} ${r.snippet ?? ''}`)
+    .join('\n');
 
-    const actionId = match.actionId ?? match.id;
-    try {
-      const result = await anakin.wire(actionId, {
-        query: companyName,
-        symbol: companyName,
-        company: companyName,
-        url: `https://www.screener.in/company/${slugify(companyName)}/`,
-      });
-      if (result.status === 'completed' && result.data) {
-        return { data: result.data, source: `wire:${actionId}` };
-      }
-    } catch {
-      // Try next action
-    }
-  }
-  return null;
+  const metrics = parseMetricsFromText(text);
+  if (Object.keys(metrics).length === 0) return null;
+
+  return { metrics, source: 'anakin search' };
 }
 
 async function scrapeScreener(companyName) {
@@ -85,13 +80,7 @@ async function scrapeScreener(companyName) {
 
   const slug = slugify(companyName);
   const searchUrl = `https://www.screener.in/company/${slug}/`;
-  const doc = await anakin.scrape(searchUrl, {
-    formats: ['markdown'],
-    country: 'in',
-    useBrowser: true,
-    generateJson: true,
-    pollTimeoutMs: 180_000,
-  });
+  const doc = await anakin.scrape(searchUrl, SCRAPE_OPTS);
 
   return {
     markdown: doc.markdown ?? '',
@@ -106,42 +95,33 @@ async function scrapeYahoo(companyName) {
   if (!anakin) return null;
 
   const symbolGuess = companyName.trim().toUpperCase().replace(/\s+/g, '');
-  const urls = [
-    `https://finance.yahoo.com/quote/${symbolGuess}.NS/`,
-    `https://finance.yahoo.com/quote/${symbolGuess}/`,
-    `https://finance.yahoo.com/lookup?s=${encodeURIComponent(companyName)}`,
-  ];
+  const url = `https://finance.yahoo.com/quote/${symbolGuess}.NS/`;
 
-  for (const url of urls) {
-    try {
-      const doc = await anakin.scrape(url, {
-        formats: ['markdown'],
-        country: 'in',
-        useBrowser: true,
-        generateJson: true,
-        pollTimeoutMs: 180_000,
-      });
-      if (doc.markdown || doc.generatedJson) {
-        return {
-          markdown: doc.markdown ?? '',
-          json: doc.generatedJson ?? {},
-          url,
-          source: 'yahoo finance',
-        };
-      }
-    } catch {
-      continue;
-    }
-  }
-  return null;
+  const doc = await anakin.scrape(url, SCRAPE_OPTS);
+  if (!doc.markdown && !doc.generatedJson) return null;
+
+  return {
+    markdown: doc.markdown ?? '',
+    json: doc.generatedJson ?? {},
+    url,
+    source: 'yahoo finance',
+  };
 }
 
-function extractMetricsFromWireData(data) {
-  const flat = JSON.stringify(data).toLowerCase();
+function metricsFromScrape(result) {
+  if (!result) return {};
   return mergeMetrics(
-    buildMetricsFromJson(data),
-    parseMetricsFromText(flat)
+    buildMetricsFromJson(result.json),
+    parseMetricsFromText(result.markdown)
   );
+}
+
+export class ApiKeyConfigError extends Error {
+  constructor(status) {
+    super(apiKeyHelpMessage(status));
+    this.name = 'ApiKeyConfigError';
+    this.status = status;
+  }
 }
 
 export async function fetchStockAnalysis(companyName) {
@@ -150,7 +130,12 @@ export async function fetchStockAnalysis(companyName) {
     throw new Error('Please enter a company name.');
   }
 
-  if (!API_KEY) {
+  const keyStatus = getApiKeyStatus();
+  if (keyStatus !== 'ok' && keyStatus !== 'missing') {
+    throw new ApiKeyConfigError(keyStatus);
+  }
+
+  if (!isAnakinConfigured()) {
     const demo = getDemoMetrics(name);
     return {
       companyName: demo.companyName,
@@ -160,50 +145,63 @@ export async function fetchStockAnalysis(companyName) {
     };
   }
 
-  const sources = [];
-  let metrics = {};
+  const work = async () => {
+    const sources = [];
+    let metrics = {};
 
-  const wire = await tryWireStockAction(name);
-  if (wire?.data) {
-    sources.push(wire.source);
-    metrics = mergeMetrics(metrics, extractMetricsFromWireData(wire.data));
-  }
+    // Fast path: Anakin search usually finishes in a few seconds
+    const searchOut = await Promise.allSettled([
+      withTimeout(fetchViaSearch(name), 20_000, 'Search'),
+    ]).then(([r]) => r);
 
-  const screener = await scrapeScreener(name);
-  if (screener) {
-    sources.push(screener.source);
-    metrics = mergeMetrics(
-      metrics,
-      buildMetricsFromJson(screener.json),
-      parseMetricsFromText(screener.markdown)
-    );
-  }
+    if (searchOut.status === 'fulfilled' && searchOut.value) {
+      sources.push(searchOut.value.source);
+      metrics = mergeMetrics(metrics, searchOut.value.metrics);
+    }
 
-  const yahoo = await scrapeYahoo(name);
-  if (yahoo) {
-    sources.push(yahoo.source);
-    metrics = mergeMetrics(
-      metrics,
-      buildMetricsFromJson(yahoo.json),
-      parseMetricsFromText(yahoo.markdown)
-    );
-  }
+    if (Object.keys(metrics).length > 0) {
+      return {
+        companyName: name,
+        metrics,
+        sources,
+        mode: 'live',
+      };
+    }
 
-  if (Object.keys(metrics).length === 0) {
-    const demo = getDemoMetrics(name);
+    // Slower: scrape Screener + Yahoo in parallel (only if search had no metrics)
+    const [screenerOut, yahooOut] = await Promise.allSettled([
+      withTimeout(scrapeScreener(name), SCRAPE_TIMEOUT_MS, 'Screener'),
+      withTimeout(scrapeYahoo(name), SCRAPE_TIMEOUT_MS, 'Yahoo'),
+    ]);
+
+    if (screenerOut.status === 'fulfilled' && screenerOut.value) {
+      sources.push(screenerOut.value.source);
+      metrics = mergeMetrics(metrics, metricsFromScrape(screenerOut.value));
+    }
+
+    if (yahooOut.status === 'fulfilled' && yahooOut.value) {
+      sources.push(yahooOut.value.source);
+      metrics = mergeMetrics(metrics, metricsFromScrape(yahooOut.value));
+    }
+
+    if (Object.keys(metrics).length === 0) {
+      const demo = getDemoMetrics(name);
+      return {
+        companyName: name,
+        metrics: demo,
+        sources: [...sources, 'demo-fallback'],
+        mode: 'fallback',
+        note: 'Could not fetch live data in time — showing estimated metrics.',
+      };
+    }
+
     return {
       companyName: name,
-      metrics: demo,
-      sources: [...sources, 'demo-fallback'],
-      mode: 'fallback',
-      note: 'Live scrape returned limited data — showing estimated demo metrics.',
+      metrics,
+      sources,
+      mode: 'live',
     };
-  }
-
-  return {
-    companyName: name,
-    metrics,
-    sources,
-    mode: 'live',
   };
+
+  return withTimeout(work(), TOTAL_TIMEOUT_MS, 'Analysis');
 }

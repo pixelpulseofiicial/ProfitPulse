@@ -4,11 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ProfitPulse — Result</title>
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/logo.svg" />
     <link rel="stylesheet" href="/css/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
     <header class="top-bar">
-      <h1>ProfitPulse</h1>
+      <a href="/" class="top-bar-brand">
+        <img src="/logo.svg" alt="" class="pp-logo-img pp-logo-img--sm" width="32" height="32" />
+        <h1>ProfitPulse</h1>
+      </a>
     </header>
 
     <main class="result-page">
@@ -16,6 +22,17 @@
       <p class="loading" id="status">Analyzing stock data…</p>
       <p class="signal" id="signal" hidden></p>
       <p class="score-pill" id="score-pill" hidden></p>
+
+      <section class="chart-container" id="chart-section" hidden>
+        <div class="chart-wrapper">
+          <canvas id="metricsChart"></canvas>
+          <p class="chart-label">Health Radar</p>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="priceChart"></canvas>
+          <p class="chart-label">Price Trend (1Y)</p>
+        </div>
+      </section>
 
       <section class="details" id="details" hidden>
         <h2>Why?</h2>

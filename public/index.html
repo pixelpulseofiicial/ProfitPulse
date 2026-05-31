@@ -4,18 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ProfitPulse</title>
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/logo.svg" />
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
     <header class="top-bar">
-      <h1>ProfitPulse</h1>
+      <a href="/" class="top-bar-brand">
+        <img src="/logo.svg" alt="" class="pp-logo-img pp-logo-img--sm" width="32" height="32" />
+        <h1>ProfitPulse</h1>
+      </a>
     </header>
 
     <main class="main-screen">
       <p class="handwriting-title" aria-label="ProfitPulse">ProfitPulse</p>
 
       <div class="search-wrap">
-        <form class="search-form" id="search-form" action="/company.html" method="get">
+        <div class="search-row">
+          <a href="/" class="pp-logo" aria-label="ProfitPulse home">
+            <img src="/logo.svg" alt="ProfitPulse PP logo" class="pp-logo-img" width="56" height="56" />
+          </a>
+          <form class="search-form" id="search-form" action="/company.html" method="get">
           <input
             type="text"
             name="q"
@@ -25,11 +34,20 @@
             required
           />
           <button type="submit">Search</button>
-        </form>
+          </form>
+        </div>
         <p class="hint">
           We check Yahoo Finance &amp; Screener using the Anakin Wire API.
         </p>
       </div>
+
+      <section class="news-section" aria-labelledby="news-heading">
+        <h2 id="news-heading" class="news-heading">Company News</h2>
+        <p class="news-subtitle" id="news-subtitle">Latest headlines from the market</p>
+        <p class="news-loading" id="news-loading">Loading news…</p>
+        <ul class="news-grid" id="news-grid" hidden></ul>
+        <p class="news-error" id="news-error" hidden></p>
+      </section>
     </main>
 
     <script src="/js/main.js"></script>
