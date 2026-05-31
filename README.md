@@ -20,3 +20,6 @@ Built for the Anakin Build-a-thon. Uses Node.js as the backend and the Anakin Wi
 
 ## Live Demonstration
 Drive link: https://drive.google.com/drive/folders/1wFVYWX9fNaXHSY6whPCjtff6whpt3Jyn?usp=drive_link
+
+## URL
+Try it out on https://profitpulse-production-553d.up.railway.app
